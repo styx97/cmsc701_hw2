@@ -25,6 +25,19 @@ class SubChunk {
 
 }
 
+//class GlobalLookupTable {
+//    private IntVector[] globalLookupTable;
+//    private int numChunks;
+//
+//    public GlobalLookupTable (int size) {
+//        double v = Math.log(size) / Math.log(2);
+//        int globalLookupTableSize = (int) Math.ceil (Math.pow(2, v));
+//        globalLookupTable = new IntVector[globalLookupTableSize, Math.ceil( v / (double) 2)];
+//        numChunks = (int) Math.ceil(size / (double) chunkSize);
+//        globalLookupTable = new IntVector[numChunks];
+//    }
+//}
+
 class Chunk {
     private IntVector relativeSubChunksOffsets;
     private SubChunk[] subChunks;
@@ -85,7 +98,7 @@ class Chunk {
         int exactRankIndex = subChunkOffset % subChunkSize;
         System.out.println("exactRankIndex: " + exactRankIndex);
 
-        return relativeSubChunksOffset + subChunks[subChunkOffset].getSubChunkRankAt(subChunkOffset % subChunkSize);
+        return relativeSubChunksOffset + subChunks[subChunkIndex].getSubChunkRankAt(exactRankIndex);
     }
 
 
@@ -129,18 +142,18 @@ class CreateAndQueryJacobson {
     public void display() {
         System.out.println("Chunk size: " + chunkSize + " Num chunks: " + numChunks + " Subchunk size: " + subChunkSize);
         for (int i = 0; i <   numChunks; i++) {
-            System.out.println("Chunk " + i);
-            System.out.println("Cumulative rank of last element of chunk " + i + " : " + cumulativeChunkOffsets.get(i));
+//            System.out.println("Chunk " + i);
+//            System.out.println("Cumulative rank of last element of chunk " + i + " : " + cumulativeChunkOffsets.get(i));
 
 
-//            for (int j = 0; j < chunks[i].getNumSubChunks(); j++) {
-//                System.out.println("  Subchunk " + j);
-//                System.out.println("  Cumulative rank of last element of subchunk " + j + " : " + chunks[i].getRelativeSubChunksOffsetAt(j));
-////                for (int k = 0; k < subChunkSize; k++) {
-////                    System.out.println("  Rank of element " + k + " : " + chunks[i].getSubChunks()[j].getSubChunkRankAt(k));
-////                }
-//                System.out.println("Cumulative relative offset of the subchunks:  " +  chunks[i].getRelativeSubChunksOffsetAt(j));
-//            }
+            for (int j = 0; j < chunks[i].getNumSubChunks(); j++) {
+                System.out.println("  Subchunk " + j);
+                System.out.println("  Cumulative rank of last element of subchunk " + j + " : " + chunks[i].getRelativeSubChunksOffsetAt(j));
+//                for (int k = 0; k < subChunkSize; k++) {
+//                    System.out.println("  Rank of element " + k + " : " + chunks[i].getSubChunks()[j].getSubChunkRankAt(k));
+//                }
+                System.out.println("Cumulative relative offset of the subchunks:  " +  chunks[i].getRelativeSubChunksOffsetAt(j));
+            }
 
 
         }
@@ -215,14 +228,13 @@ public class jacobson {
         System.out.println( "Cumulative rank: "  + jacobson.getJacobsonRank( 1) );
 
 
-//        // compare outputs of ground and jacobson over all indices
-//        for (int i = 0; i < 100; i++) {
-//
-//            System.out.println("Ground rank: " + ground_ranks[i] + " Jacobson rank: " + jacobson.getJacobsonRank(i));
-//            if (ground_ranks[i] != jacobson.getJacobsonRank(i)) {
-//                System.out.println(" --> Error at index: " + i);
-//            }
-//        }
+        // compare outputs of ground and jacobson over all indices
+        for (int i = 0; i < 100; i++) {
+            System.out.println("Ground rank: " + ground_ranks[i] + " Jacobson rank: " + jacobson.getJacobsonRank(i));
+            if (ground_ranks[i] != jacobson.getJacobsonRank(i)) {
+                System.out.println(" --> Error at index: " + i);
+            }
+        }
 
 
     }
