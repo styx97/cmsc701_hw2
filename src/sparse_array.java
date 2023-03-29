@@ -287,20 +287,17 @@ public class sparse_array {
 //        System.out.println(sparseArray.indices);
 //
         // test get_at_rank
-        ReturnObject returnObject = new ReturnObject(null);
+        ReturnObject e = new ReturnObject(null);
         System.out.println("Testing get_at_rank");
-        System.out.println(sparseArray.get_at_rank(1, returnObject)); // should be foo
-        System.out.println("Return object: " + returnObject.getElem());
+        System.out.println(sparseArray.get_at_rank(1, e)); // should be foo
+        System.out.println("Return object: " + e.getElem());
 //        System.out.println(sparseArray.get_at_rank(4, returnObject)); // should be bar
 //        System.out.println("Return object: " + returnObject.getElem());
 //
 //
         //  test get_at_index
 //        System.out.println("Testing get_at_index");
-//        ReturnObject r1 = sparseArray.get_at_index(3);
-//        System.out.println(" At index 3: " + r1.getElem() + " Return bool: " + r1.getPresence());
-//        r1 = sparseArray.get_at_index(9);
-//        System.out.println(" At index 5: " + r1.getElem() + " Return bool: " + r1.getPresence());
+//        System.out.println(sparseArray.get_at_index(3, e));
 //
 //
         // test get_index_of

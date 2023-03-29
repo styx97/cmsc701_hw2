@@ -37,3 +37,46 @@ The edu folder in src contains the external files used.
 
     For example, to run the experiments for task 1 and task 2 (rank and select), run the ```test_for_plot``` method in ```jacobson_succinct.java```. To run the experiments for task 3 (sparse array), run the ```test_for_plot``` method in ```sparse_array.java```.
 
+
+
+### File Specific instructions
+
+Apart from the toy examples and the ``test_for_plot`` methods, here's a quick guide to how to use the methods in the classes.
+
+1. jacobson_succinct.java
+
+```
+    int[] bitarray = {1,1,0,1,0,1,0,0,1,0,0,0,1};
+    CreateAndQueryJacobson jacobson = new CreateAndQueryJacobson(bitarray);
+    System.out.println("Rank of Jacobson: " + jacobson.rank1(50));
+    System.out.println("Select of Jacobson: " + jacobson.select1(3));
+    System.out.println("Overhead of Jacobson: " + jacobson.overhead());
+
+    // save and load 
+    CreateAndQueryJacobson.save("jacobson.ser", jacobson);
+    CreateAndQueryJacobson jacobson2 = CreateAndQueryJacobson.load("jacobson.ser");
+
+```
+
+2. sparse_array.java
+
+```
+    sparse_array sparseArray = new sparse_array(13);
+    sparseArray.append("foo", 1);
+    sparseArray.append("bar", 5);
+    sparseArray.append("baz", 9);
+    sparseArray.append("bar", 12);
+    sparseArray.finalizeSparseArray();
+
+    ReturnObject e = new ReturnObject(null);
+    // Test individual methods
+    System.out.println("Testing get_at_rank");
+    System.out.println(sparseArray.get_at_rank(1, e)); // should be true
+    System.out.println("Return object: " + e.getElem()); // should return foo
+
+    System.out.println(sparseArray.get_index_of(2)); // should be 5
+    System.out.println(sparseArray.num_elem_at(4)); // should be 1
+    System.out.println(sparseArray.size()); // should be 13
+    System.out.println(sparseArray.num_elem()); // should be 4
+
+```
