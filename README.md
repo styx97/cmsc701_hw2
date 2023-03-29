@@ -20,6 +20,8 @@ Code for the second assignment in CMSC701. Classes to do access, rank and select
 
     A simple implementation of rank and select, used only for verification purposes.
     
+    4. plotter.ipynb contains code that can be used to load outputs.txt onto a dataframe for plotting purposes [For analyzing space/ time complexities of sparse array methods].
+    
 
 ## Attribution
 
