@@ -1,4 +1,8 @@
 public class naive_rsa {
+    // methods that compute RSA is the most naive way possible
+    // only for error checking purposes
+
+
     // Return the element corresponding to an index in a binary array
     private int[] array;
 

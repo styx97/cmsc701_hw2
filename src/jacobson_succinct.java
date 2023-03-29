@@ -1,7 +1,21 @@
 import edu.berkeley.cs.succinct.util.vector.IntVector;
-// import java.lang.Integer;
+/*
+Code for IntVector class taken from - https://github.com/amplab/succinct/blob/master/core/src/main/java/edu/berkeley/cs/succinct/util/vector/IntVector.java
 
-class ChunkFly {
+ */
+
+
+import java.io.*;
+import java.util.Arrays;
+import java.util.Random;
+import java.io.FileOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.FileInputStream;
+import java.io.ObjectInputStream;
+
+
+
+class ChunkFly implements Serializable {
     private IntVector relativeSubChunksOffsets;
     private IntVector subChunkLookupTable;
     private int numSubChunks;
@@ -26,10 +40,11 @@ class ChunkFly {
         // sum of bits in masked int is the rank
 
         // TODO: replace this with Int.bitcount
-        while (maskedInt > 0) {
-            rank += maskedInt & 1;
-            maskedInt >>= 1;
-        }
+        rank = Integer.bitCount(maskedInt);
+//        while (maskedInt > 0 ) {
+//            rank += maskedInt & 1;
+//            maskedInt >>= 1;
+//        }
         return rank;
     }
 
@@ -54,7 +69,7 @@ class ChunkFly {
         // System.out.println("numSubChunks: " + numSubChunks);
         // relativeSubChunksOffsets is an array of offsets for each subchunk inside this particular chunk
         // that saves the relative cumulative rank of the last element of the subchunk
-        int subChunkBitSize = (int) Math.ceil(Math.log(end-start) / Math.log(2));
+        int subChunkBitSize = (int) Math.ceil(Math.log(end-start+1) / Math.log(2));
         relativeSubChunksOffsets = new IntVector(numSubChunks, subChunkBitSize);
         // System.out.println("subChunkBitSize: " + subChunkBitSize);
         int prevRank = 0;
@@ -69,9 +84,8 @@ class ChunkFly {
             int lookupInt = createLookupInt(bitarray, subChunkStart, subChunkEnd);
             subChunkLookupTable.add(i, lookupInt);
             // find the index of the lookup table for this subchunk
-            //subChunkLookupTable.add(i, createLookupInt(subChunkStart, subChunkEnd));
-            // add the last element of rank to the relativeSubChunksOffsets
             prevRank +=  getRankfromInt(lookupInt, subChunkSize - 1);
+            // add the last element of rank to the relativeSubChunksOffsets
             relativeSubChunksOffsets.add(i, prevRank);
         }
     }
@@ -106,7 +120,7 @@ class ChunkFly {
     }
 }
 
-class CreateAndQueryJacobson {
+class CreateAndQueryJacobson implements Serializable {
     private int chunkSize, numChunks, subChunkSize, arraySize;
     private IntVector cumulativeChunkOffsets;
     private ChunkFly[] chunks;
@@ -118,6 +132,7 @@ class CreateAndQueryJacobson {
         arraySize = size;
     }
 
+    // constructor for the object
     public CreateAndQueryJacobson(int[] array) {
         System.out.println("Creating Jacobson index");
         setSizes(array.length);
@@ -125,13 +140,13 @@ class CreateAndQueryJacobson {
         // Create an array of chunks
         ChunkFly[] chunks = new ChunkFly[numChunks];
         // create an intVector for each chunk to store the cumulative rank of each chunk
-        IntVector cumulativeChunkOffsets = new IntVector(numChunks, (int) Math.ceil(Math.log(array.length) / Math.log(2)));
+        IntVector cumulativeChunkOffsets = new IntVector(numChunks, (int) Math.ceil(Math.log(array.length+1) / Math.log(2)));
         int prevRank = 0;
         // For each chunk, populate the subchunks and the cumulative rank of each chunk
         for (int i = 0; i < numChunks; i++) {
             int chunkStart = i * chunkSize;
             int chunkEnd = Math.min(chunkStart + chunkSize, array.length);
-            System.out.println("chunk start: " + chunkStart + " chunk end: " + chunkEnd);
+            //System.out.println("chunk start: " + chunkStart + " chunk end: " + chunkEnd);
             chunks[i] = new ChunkFly(array, chunkStart, chunkEnd, subChunkSize);
             // for this chunk, add the cumulative rank of the last element of the chunk
             prevRank += chunks[i].getRelativeSubChunksOffsetAt(chunks[i].getNumSubChunks() - 1);
@@ -147,17 +162,6 @@ class CreateAndQueryJacobson {
         for (int i = 0; i <   numChunks; i++) {
             System.out.println("Chunk " + i);
             System.out.println("Cumulative rank of last element of chunk " + i + " : " + cumulativeChunkOffsets.get(i));
-
-
-//            for (int j = 0; j < chunks[i].getNumSubChunks(); j++) {
-//                System.out.println("  Subchunk " + j);
-//                System.out.println("  Cumulative rank of last element of subchunk " + j + " : " + chunks[i].getRelativeSubChunksOffsetAt(j));
-////                for (int k = 0; k < subChunkSize; k++) {
-////                    System.out.println("  Rank of element " + k + " : " + chunks[i].getSubChunks()[j].getSubChunkRankAt(k));
-////                }
-//                System.out.println("Cumulative relative offset of the subchunks:  " +  chunks[i].getRelativeSubChunksOffsetAt(j));
-//            }
-
 
         }
     }
@@ -216,10 +220,27 @@ class CreateAndQueryJacobson {
 
     public int overhead() {
         int overhead = cumulativeChunkOffsets.overhead();
-        for (int i = 0; i < numChunks; i++) {
+        for (int i = 0; i < chunks.length; i++) {
             overhead += chunks[i].overhead();
         }
         return overhead + Integer.SIZE * 4;
+    }
+
+    public static void save(String filename, CreateAndQueryJacobson exampleObject) throws IOException {
+        FileOutputStream fileOut = new FileOutputStream(filename);
+        ObjectOutputStream out = new ObjectOutputStream(fileOut);
+        out.writeObject(exampleObject);
+        out.close();
+        fileOut.close();
+    }
+
+    public static CreateAndQueryJacobson load(String inputFile) throws IOException, ClassNotFoundException {
+        FileInputStream fileIn = new FileInputStream(inputFile);
+        ObjectInputStream in = new ObjectInputStream(fileIn);
+        CreateAndQueryJacobson exampleObject = (CreateAndQueryJacobson) in.readObject();
+        in.close();
+        fileIn.close();
+        return exampleObject;
     }
 }
 
@@ -248,47 +269,126 @@ public class jacobson_succinct {
 
     }
 
-    public static void main(String[] args) {
+    static void test_for_plot() {
+        int[] bitarray = new int[15];
+        // set each bit in the bitarray to 1 with a probability of 30 %
+        for (int i = 0; i < bitarray.length; i++) {
+            bitarray[i] = Math.random() < 0.3 ? 1 : 0;
+        }
 
-        // create a bitarray of length 20
-        int[] bitarray = {1,1,0,0,1,1,0,0};
-        int numRepeatSize = 1000;
+        int[] numRepeatSizes = {10, 100, 1000, 10000, 100000, 1000000, 10000000};
+
+        long[] rankTimes = new long[numRepeatSizes.length];
+        long[] selectTimes = new long[numRepeatSizes.length];
+        int[] overheads = new int[numRepeatSizes.length];
+
+
+        for (int j=0; j < numRepeatSizes.length; j++) {
+            // run the code for each numRepeatSize
+            int numRepeatSize = numRepeatSizes[j];
+            System.out.println("Num repeat size: " + numRepeatSize);
+            int[] ground_ranks = new int[numRepeatSize];
+            int[] repeat = new int[numRepeatSize];
+            for (int i = 0; i < numRepeatSize; i++) {
+                repeat[i] = bitarray[i % bitarray.length];
+            }
+            for (int i = 0; i < numRepeatSize; i++) {
+                ground_ranks[i] = findRank(bitarray, i % bitarray.length);
+            }
+
+            CreateAndQueryJacobson jacobson = new CreateAndQueryJacobson(repeat);
+            int overhead = jacobson.overhead();
+            int max_ones = jacobson.getCumulativeChunkOffsets().get(jacobson.getNumChunks() - 1);
+
+            // create random queries of length 500 between 1 and max_ones
+            Random rand = new Random();
+            int numQueries = 10000;
+            int[] rankQueries = new int[numQueries];
+            int[] selectQueries = new int[numQueries];
+            for (int i = 0; i < numQueries; i++) {
+                rankQueries[i] = rand.nextInt(numRepeatSize) + 1;
+                selectQueries[i] = rand.nextInt(max_ones) + 1;
+            }
+
+            // time taken to do rank and select queries in milliseconds
+            long startTime = System.nanoTime();
+            for (int i = 0; i < numQueries; i++) {
+                jacobson.rank1(rankQueries[i]);
+            }
+            long midTime = System.nanoTime();
+            for (int i = 0; i < numQueries; i++) {
+                jacobson.select1(selectQueries[i]);
+            }
+            long endTime = System.nanoTime();
+            long selectTime = endTime - midTime;
+            long rankTime = midTime - startTime;
+
+            selectTimes[j] = selectTime;
+            rankTimes[j] = rankTime;
+            overheads[j] = overhead;
+
+        }
+
+        // print out the three arrays of times, overheads, and numRepeatSizes
+        System.out.println("Rank Times: " + Arrays.toString(rankTimes));
+        System.out.println("Select Times: " + Arrays.toString(selectTimes));
+        System.out.println("Overheads: " + Arrays.toString(overheads));
+        System.out.println("sizes of Bitarray: " + Arrays.toString(numRepeatSizes));
+
+    }
+
+    public static void main(String[] args) throws IOException, ClassNotFoundException {
+
+//         create a bitarray of length 13
+        int[] bitarray = {1,1,0,1,0,1,0,0,1,0,0,0,1};
+        int numRepeatSize = 100;
         int[] ground_ranks = new int[numRepeatSize];
-
-
         int[] repeat = new int[numRepeatSize];
+
+
+        // populate repeat with numRepeatSize copies of bitarray
         for (int i = 0; i < numRepeatSize; i++) {
             repeat[i] = bitarray[i % bitarray.length];
         }
-        for (int i = 0; i < numRepeatSize; i++) {
-            ground_ranks[i] = findRank(repeat, i);
-        }
-
-        System.out.println("Array length: " + repeat.length);
-        CreateAndQueryJacobson jacobson = new CreateAndQueryJacobson(repeat);
-        jacobson.display();
-        System.out.println("Overhead: " + jacobson.overhead());
-
-        int max_ones = jacobson.getCumulativeChunkOffsets().get(jacobson.getNumChunks() - 1);
-        System.out.println("Max ones: " + max_ones);
-
-        // compare rank outputs at a random position
-        // System.out.println( "Actual Rank: "  + findRank(repeat, 1) );
-        // System.out.println( "Cumulative rank: "  + jacobson.rank1( 1) );
-
-
-//         compare outputs of ground and jacobson over all ranks
+//
+//        System.out.println("Size of repeat: " + repeat.length);
+//        // populate ground_ranks with the ranks of the bitarray
 //        for (int i = 0; i < numRepeatSize; i++) {
-//            System.out.println("Ground rank: " + ground_ranks[i] + " Jacobson rank: " + jacobson.rank1(i));
-//            if (ground_ranks[i] != jacobson.rank1(i)) {
-//                System.out.println("    --> Error at index: " + i);
+//            ground_ranks[i] = findRank(repeat, i);
+//        }
+//
+        // create a jacobson data structure for repeat
+        CreateAndQueryJacobson jacobson = new CreateAndQueryJacobson(repeat);
+        System.out.println("Rank of Jacobson: " + jacobson.rank1(50));
+        System.out.println("Select of Jacobson: " + jacobson.select1(30));
+
+
+//      // save and load jacobson   
+//        CreateAndQueryJacobson.save("jacobson.ser", jacobson);
+//        CreateAndQueryJacobson jacobson2 = CreateAndQueryJacobson.load("jacobson.ser");
+//
+//
+//        int[] jacobson_ranks = new int[numRepeatSize];
+//        for (int i = 0; i < numRepeatSize; i++) {
+//            jacobson_ranks[i] = jacobson2.rank1(i);
+//        }
+//
+//        // compare outputs of gold and jacobson over all ranks
+//        for (int i = 0; i < numRepeatSize; i++) {
+//            System.out.println("Ground rank: " + ground_ranks[i] + " Jacobson rank: " + jacobson_ranks[i]);
+//            if (ground_ranks[i] != jacobson_ranks[i]) {
+//                System.out.println(" --> Mismatch at index: " + i);
+//                break;
 //            }
 //        }
 
+         test_for_plot();
+
+
         // compare outputs of select at a random position
-        System.out.println( "Actual select: "  + select(repeat, 498) );
-        System.out.println( "Jacobson select: "  + jacobson.select1( 498) );
-//
+//        System.out.println( "Actual select: "  + select(repeat, 498) );
+//        System.out.println( "Jacobson select: "  + jacobson.select1( 498) );
+////
 //        // compare outputs of ground and jacobson over all select queries
 //        for (int i = 0; i < 500; i++) {
 //            System.out.println("Ground select: " + select(repeat, i) + " Jacobson select: " + jacobson.select1(i));

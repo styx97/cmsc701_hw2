@@ -5,13 +5,14 @@ import edu.berkeley.cs.succinct.util.BitUtils;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 
 /**
  * A compactly represented vector of bits. Internally holds the data as an array of 64 bit integers
  * and supports efficiently setting, getting and clearing bits in the bit vector.
  */
-public class BitVector {
+public class BitVector implements Serializable {
 
     private long[] data;
 

@@ -6,6 +6,7 @@ import edu.berkeley.cs.succinct.util.container.IntArrayList;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.ByteBuffer;
 import java.util.IllegalFormatPrecisionException;
 
@@ -13,7 +14,7 @@ import java.util.IllegalFormatPrecisionException;
  * Stores a vector of N integers, each with a maximum bit width of B compactly using N * B bits.
  * Supports efficiently getting and setting values.
  */
-public class IntVector extends BitVector {
+public class IntVector extends BitVector implements Serializable {
 
     private int bitWidth;
 
@@ -112,6 +113,12 @@ public class IntVector extends BitVector {
         }
 
         return new IntVector(bitWidth, BitVector.readFromStream(in));
+    }
+
+    public int overhead() {
+        // IntVector uses Long.SIZE bits per block.
+        // and Integer.SIZE bits for bitWidth.
+        return numBlocks() * Long.SIZE + Integer.SIZE;
     }
 
     /**
